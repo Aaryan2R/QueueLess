@@ -1,0 +1,2 @@
+-- Create a test owner through Supabase Auth, then use the dashboard to create a business.
+-- Queue data must be created through the application so ownership and RLS are applied.
