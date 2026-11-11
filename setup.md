@@ -30,6 +30,9 @@ Example variables:
 NEXT_PUBLIC_SUPABASE_URL=<your-supabase-project-url>
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-supabase-anon-key>
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<your-vapid-public-key>
+VAPID_PRIVATE_KEY=<your-vapid-private-key>
+VAPID_SUBJECT=mailto:admin@example.com
 ```
 
 Start development server:
@@ -41,8 +44,9 @@ npm run dev
 1. Create a Supabase project.
 2. Open the Supabase SQL editor.
 3. Run `supabase/migrations/202610230001_initial.sql`.
-4. Create an owner through QueueLess signup.
-5. Never commit production credentials.
+4. Run the numbered follow-up migrations in `supabase/migrations/`.
+5. Create an owner through QueueLess signup.
+6. Never commit production credentials.
 
 ## Local URLs
 Suggested defaults:
@@ -55,15 +59,17 @@ Create one owner through `/signup`, then create a business from `/dashboard`. Th
 1. Push this folder to a GitHub repository.
 2. Import the repository into Vercel.
 3. Add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_APP_URL` in Vercel project environment variables.
-4. Run the migration in the Supabase SQL editor before opening the deployed site.
-5. In Supabase Auth URL configuration, add the Vercel deployment URL as the site URL.
-6. Enable Realtime for the `tickets` table if it is not enabled automatically by the migration.
+4. Add the VAPID variables to Vercel if push notifications are enabled.
+5. Run the migrations in the Supabase SQL editor before opening the deployed site.
+6. In Supabase Auth URL configuration, add the Vercel deployment URL as the site URL.
+7. Enable Realtime for the `tickets` table if it is not enabled automatically by the migration.
 
 The app remains usable through normal page refreshes and a 30-second polling fallback if a free-tier realtime connection is interrupted.
 
 ## Current operational boundaries
 - Customers do not create accounts; their ticket URL is the private recovery link.
-- No SMS, email, billing, custom domains, or file uploads are required for the first release.
+- Push notifications require browser permission and VAPID configuration; SMS/email remain deferred.
+- No billing, custom domains, or file uploads are required for the first release.
 - Keep the Supabase anon key public as intended; never expose the service-role key in the browser or commit it.
 
 Then test the full QR/customer/staff flow.

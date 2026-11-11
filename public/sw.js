@@ -3,8 +3,6 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "QueueLess", {
       body: data.body || "Your queue status has changed.",
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
       tag: data.tag || "queueless-ticket",
       data: { url: data.url || "/" }
     })

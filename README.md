@@ -25,6 +25,7 @@ QueueLess allows cafés, restaurants, salons, clinics, and similar service-based
 - Supabase PostgreSQL for relational data and queue-safe database functions.
 - Supabase Auth for owner/staff authentication.
 - Supabase Realtime for live dashboard updates, with refresh/polling-safe pages.
+- Web Push notifications for customer turn alerts when VAPID credentials are configured.
 - Vercel for the web deployment.
 - QR links generated from public queue URLs.
 
@@ -54,7 +55,7 @@ This intentionally avoids a separately deployed API, custom auth server, and sta
 - PWA support.
 - Advanced analytics.
 
-The first implementation intentionally defers customer accounts, billing, external notifications, file uploads, custom domains, and a full platform-admin console.
+The first implementation intentionally defers customer accounts, billing, SMS/email/WhatsApp notifications, file uploads, custom domains, and a full platform-admin console.
 
 ## 7. Success Criteria
 A reviewer should be able to complete this demonstration:
