@@ -22,15 +22,15 @@ async function sendTicketAlert(
   title: string,
   body: string
 ) {
-  const { data: existingAlert, error: existingAlertError } = await admin
+  const { data: claimedAlert, error: claimError } = await admin
     .from("ticket_alerts")
+    .insert({ ticket_id: ticketId, alert_level: alertLevel })
     .select("id")
-    .eq("ticket_id", ticketId)
-    .eq("alert_level", alertLevel)
     .maybeSingle();
 
-  if (existingAlertError) throw new Error(existingAlertError.message);
-  if (existingAlert) return;
+  if (claimError?.code === "23505") return;
+  if (claimError) throw new Error(claimError.message);
+  if (!claimedAlert) return;
 
   const { data: subscriptions, error } = await admin
     .from("push_subscriptions")
@@ -38,38 +38,42 @@ async function sendTicketAlert(
     .eq("ticket_id", ticketId);
 
   if (error) throw new Error(error.message);
-  if (!subscriptions.length) return;
+  if (!subscriptions.length) {
+    await admin.from("ticket_alerts").delete().eq("id", claimedAlert.id);
+    return;
+  }
 
-  await Promise.all(
-    (subscriptions as Pick<PushSubscriptionRow, "id" | "endpoint" | "p256dh" | "auth">[]).map(async (subscription) => {
-      try {
-        await webpush.sendNotification(
-          {
-            endpoint: subscription.endpoint,
-            keys: { p256dh: subscription.p256dh, auth: subscription.auth }
-          },
-          JSON.stringify({
-            title,
-            body,
-            tag: `ticket-${ticketId}-${alertLevel}`,
-            url: ticketUrl
-          })
-        );
-      } catch (error) {
-        if (error && typeof error === "object" && "statusCode" in error && error.statusCode === 404) {
-          await admin.from("push_subscriptions").delete().eq("id", subscription.id);
-          return;
+  try {
+    await Promise.all(
+      (subscriptions as Pick<PushSubscriptionRow, "id" | "endpoint" | "p256dh" | "auth">[]).map(
+        async (subscription) => {
+          try {
+            await webpush.sendNotification(
+              {
+                endpoint: subscription.endpoint,
+                keys: { p256dh: subscription.p256dh, auth: subscription.auth }
+              },
+              JSON.stringify({
+                title,
+                body,
+                tag: `ticket-${ticketId}-${alertLevel}`,
+                url: ticketUrl
+              })
+            );
+          } catch (error) {
+            if (error && typeof error === "object" && "statusCode" in error && error.statusCode === 404) {
+              await admin.from("push_subscriptions").delete().eq("id", subscription.id);
+              return;
+            }
+            throw error;
+          }
         }
-        throw error;
-      }
-    })
-  );
-
-  const { error: alertError } = await admin.from("ticket_alerts").insert({
-    ticket_id: ticketId,
-    alert_level: alertLevel
-  });
-  if (alertError && alertError.code !== "23505") throw new Error(alertError.message);
+      )
+    );
+  } catch (error) {
+    await admin.from("ticket_alerts").delete().eq("id", claimedAlert.id);
+    throw error;
+  }
 }
 
 function getPushConfig() {

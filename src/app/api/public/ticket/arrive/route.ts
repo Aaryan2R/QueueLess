@@ -1,14 +1,18 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSupabase } from "@/lib/supabase";
-import { isTrustedMutation, publicError } from "@/lib/security";
+import { checkRateLimit, getClientAddress, isTrustedMutation, publicError, ticketTokenSchema } from "@/lib/security";
 
-const schema = z.object({ token: z.string().min(1).max(128) });
+const schema = z.object({ token: ticketTokenSchema });
 
 export async function POST(request: Request) {
   try {
     if (!isTrustedMutation(request)) {
       return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
+    }
+
+    if (!checkRateLimit(`ticket-arrive:${getClientAddress(request)}`, 10, 60_000)) {
+      return NextResponse.json({ error: "Too many requests. Please wait a minute and try again." }, { status: 429 });
     }
 
     const { token } = schema.parse(await request.json());

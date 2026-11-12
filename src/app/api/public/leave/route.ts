@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSupabase } from "@/lib/supabase";
-import { checkRateLimit, getClientAddress, isTrustedMutation, publicError } from "@/lib/security";
+import { checkRateLimit, getClientAddress, isTrustedMutation, publicError, ticketTokenSchema } from "@/lib/security";
 
 const schema = z.object({
-  token: z.string().regex(/^[a-f0-9]{48}$/)
+  token: ticketTokenSchema
 });
 
 export async function POST(request: Request) {

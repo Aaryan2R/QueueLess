@@ -23,7 +23,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     } catch (error) {
       console.error("Unable to send ticket notification:", error);
     }
-    return NextResponse.json({ ticket });
+    const { access_token: _accessToken, ...safeTicket } = ticket;
+    return NextResponse.json({ ticket: safeTicket });
   } catch (error) {
     return NextResponse.json({ error: publicError(error, "Unable to call the next ticket.") }, { status: 400 });
   }

@@ -1,4 +1,7 @@
+import { z } from "zod";
+
 const buckets = new Map<string, { count: number; resetAt: number }>();
+export const ticketTokenSchema = z.string().regex(/^[a-f0-9]{48}$/);
 
 export function isTrustedMutation(request: Request) {
   const origin = request.headers.get("origin");
