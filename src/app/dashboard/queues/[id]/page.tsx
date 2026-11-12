@@ -5,6 +5,7 @@ import QRCode from "qrcode";
 import { getServerSupabase } from "@/lib/supabase";
 import QueueControls from "./queue-controls";
 import TicketActions from "./ticket-actions";
+import QueueSettings from "./queue-settings";
 import LiveRefresh from "@/app/live-refresh";
 
 export const dynamic = "force-dynamic";
@@ -18,7 +19,7 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
   if (!user) redirect("/login");
   const { data: queue } = await supabase
     .from("queues")
-    .select("id,name,status,slug,business_id,average_service_minutes")
+    .select("id,name,status,slug,business_id,average_service_minutes,max_size")
     .eq("id", id)
     .single();
   if (!queue) notFound();
@@ -54,6 +55,17 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
             Download QR code
           </a>
         </div>
+        {business?.owner_id === user.id && (
+          <div className="card">
+            <h2>Queue settings</h2>
+            <QueueSettings
+              queueId={queue.id}
+              name={queue.name}
+              maxSize={queue.max_size}
+              averageServiceMinutes={queue.average_service_minutes}
+            />
+          </div>
+        )}
         <div className="card">
           <h2>Live queue</h2>
           {(tickets ?? []).length === 0 ? (
@@ -68,6 +80,11 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
                   <div className="muted">
                     Party of {ticket.party_size} · {ticket.status}
                   </div>
+                </div>
+                <div className="actions">
+                  <Link className="button secondary" href={`/dashboard/queues/${queue.id}/analytics`}>
+                    View history & analytics
+                  </Link>
                 </div>
                 <TicketActions ticketId={ticket.id} status={ticket.status as "WAITING" | "CALLED" | "READY"} />
               </div>

@@ -1,6 +1,6 @@
 :root {
   --ink: #172033;
-  --muted: #60708f;
+  --muted: #4b5563;
   --line: #e4e9f2;
   --brand: #3967e8;
   --brand-dark: #2346b5;
@@ -215,5 +215,22 @@ select {
   }
   .nav-links a:not(.button) {
     display: none;
+  }
+  .queue-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+@media (max-width: 360px) {
+  .page {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .actions .button {
+    width: 100%;
   }
 }

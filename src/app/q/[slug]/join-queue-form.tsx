@@ -48,7 +48,7 @@ export default function JoinQueueForm({ queueId }: { queueId: string }) {
       <label>
         Party size
         <select name="partySize" defaultValue="1">
-          {[1, 2, 3, 4, 5, 6, 7, 8].map((size) => (
+          {Array.from({ length: 20 }, (_, index) => index + 1).map((size) => (
             <option value={size} key={size}>
               {size}
             </option>
