@@ -36,6 +36,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      staff_assignments: {
+        Row: {
+          id: string;
+          business_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          business_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          business_id?: string;
+          user_id?: string;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       queues: {
         Row: {
           id: string;
@@ -91,6 +112,8 @@ export type Database = {
           ready_at: string | null;
           served_at: string | null;
           completed_at: string | null;
+          missed_turn_count: number;
+          arrival_deadline_at: string | null;
         };
         Insert: {
           id?: string;
@@ -107,6 +130,8 @@ export type Database = {
           ready_at?: string | null;
           served_at?: string | null;
           completed_at?: string | null;
+          missed_turn_count?: number;
+          arrival_deadline_at?: string | null;
         };
         Update: {
           id?: string;
@@ -123,6 +148,8 @@ export type Database = {
           ready_at?: string | null;
           served_at?: string | null;
           completed_at?: string | null;
+          missed_turn_count?: number;
+          arrival_deadline_at?: string | null;
         };
         Relationships: [];
       };
@@ -153,6 +180,27 @@ export type Database = {
           auth?: string;
           created_at?: string;
           last_seen_at?: string;
+        };
+        Relationships: [];
+      };
+      ticket_alerts: {
+        Row: {
+          id: string;
+          ticket_id: string;
+          alert_level: Database["public"]["Enums"]["ticket_alert_level"];
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          ticket_id: string;
+          alert_level: Database["public"]["Enums"]["ticket_alert_level"];
+          sent_at?: string;
+        };
+        Update: {
+          id?: string;
+          ticket_id?: string;
+          alert_level?: Database["public"]["Enums"]["ticket_alert_level"];
+          sent_at?: string;
         };
         Relationships: [];
       };
@@ -200,11 +248,42 @@ export type Database = {
         };
         Returns: undefined;
       };
+      expire_ticket_if_needed: {
+        Args: { input_token: string };
+        Returns: Database["public"]["Tables"]["tickets"]["Row"];
+      };
+      confirm_ticket_arrival: {
+        Args: { input_token: string };
+        Returns: Database["public"]["Tables"]["tickets"]["Row"];
+      };
+      add_staff_member: {
+        Args: { input_business_id: string; input_email: string };
+        Returns: {
+          id: string;
+          user_id: string;
+          email: string;
+          created_at: string;
+        }[];
+      };
+      list_business_staff: {
+        Args: { input_business_id: string };
+        Returns: {
+          id: string;
+          user_id: string;
+          email: string;
+          created_at: string;
+        }[];
+      };
+      remove_staff_member: {
+        Args: { input_assignment_id: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       app_role: "OWNER" | "STAFF" | "PLATFORM_ADMIN";
       queue_status: "ACTIVE" | "PAUSED" | "CLOSED";
       ticket_status: "WAITING" | "CALLED" | "READY" | "SERVED" | "NO_SHOW" | "CANCELLED";
+      ticket_alert_level: "AHEAD_3" | "AHEAD_2" | "AHEAD_1" | "CALLED";
     };
     CompositeTypes: Record<string, never>;
   };

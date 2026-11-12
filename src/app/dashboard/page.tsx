@@ -12,8 +12,21 @@ export default async function DashboardPage() {
     data: { user }
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const { data: businesses } = await supabase.from("businesses").select("id,name,slug").order("created_at");
-  const businessIds = (businesses ?? []).map((business) => business.id);
+  const { data: ownedBusinesses } = await supabase
+    .from("businesses")
+    .select("id,name,slug,owner_id")
+    .eq("owner_id", user.id)
+    .order("created_at");
+  const { data: assignments } = await supabase.from("staff_assignments").select("business_id").eq("user_id", user.id);
+  const businessIds = Array.from(
+    new Set([
+      ...(ownedBusinesses ?? []).map((business) => business.id),
+      ...(assignments ?? []).map((item) => item.business_id)
+    ])
+  );
+  const { data: businesses } = businessIds.length
+    ? await supabase.from("businesses").select("id,name,slug,owner_id").in("id", businessIds).order("created_at")
+    : { data: [] };
   const { data: queues } = businessIds.length
     ? await supabase
         .from("queues")
@@ -68,6 +81,11 @@ export default async function DashboardPage() {
         {(businesses ?? []).map((business) => (
           <div className="card" key={business.id}>
             <h2>{business.name}</h2>
+            {business.owner_id === user.id && (
+              <Link className="muted" href={`/dashboard/businesses/${business.id}/staff`}>
+                Manage staff
+              </Link>
+            )}
             {(queues ?? [])
               .filter((q) => q.business_id === business.id)
               .map((queue) => (

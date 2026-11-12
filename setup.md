@@ -48,6 +48,9 @@ npm run dev
 5. Create an owner through QueueLess signup.
 6. Never commit production credentials.
 
+The latest migration (`202611110006_arrival_alerts_staff.sql`) adds the 120-second arrival window,
+missed-turn requeue/cancellation rules, proximity-alert tracking, and owner-managed staff assignments.
+
 ## Local URLs
 Suggested defaults:
 - Application: `http://localhost:3000`
@@ -72,4 +75,8 @@ The app remains usable through normal page refreshes and a 30-second polling fal
 - No billing, custom domains, or file uploads are required for the first release.
 - Keep the Supabase anon key public as intended; never expose the service-role key in the browser or commit it.
 
-Then test the full QR/customer/staff flow.
+Then test the full QR/customer/staff flow:
+1. Add an existing QueueLess account as staff from the business dashboard.
+2. Join the queue as a customer and enable browser notifications.
+3. Call the customer, confirm arrival within 120 seconds, and verify the ticket becomes ready.
+4. For a missed call, verify the first expiry requeues the ticket and the second expiry marks it no-show.

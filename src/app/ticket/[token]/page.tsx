@@ -3,6 +3,7 @@ import { getServerSupabase } from "@/lib/supabase";
 import LiveRefresh from "@/app/live-refresh";
 import LeaveTicketButton from "./leave-ticket-button";
 import PushNotificationButton from "./push-notification-button";
+import ArrivalWindow from "./arrival-window";
 
 type PublicTicket = {
   token: string;
@@ -12,6 +13,8 @@ type PublicTicket = {
   status: string;
   ahead: number;
   average_service_minutes: number;
+  arrival_deadline_at: string | null;
+  missed_turn_count: number;
 };
 
 export const dynamic = "force-dynamic";
@@ -48,6 +51,12 @@ export default async function TicketPage({ params }: { params: Promise<{ token: 
               Estimated wait: about {(ticket.ahead ?? 0) * (ticket.average_service_minutes ?? 10)} minutes
             </p>
           </>
+        )}
+        {ticket.status === "CALLED" && ticket.arrival_deadline_at && (
+          <ArrivalWindow token={token} deadline={ticket.arrival_deadline_at} />
+        )}
+        {ticket.status === "WAITING" && ticket.missed_turn_count > 0 && (
+          <p className="muted">This is your final missed-turn allowance.</p>
         )}
         {["WAITING", "CALLED", "READY"].includes(ticket.status) && <LeaveTicketButton token={token} />}
         {["WAITING", "CALLED", "READY"].includes(ticket.status) && <PushNotificationButton token={token} />}

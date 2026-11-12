@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase";
 import { callNext } from "@/lib/services/queue";
 import { isTrustedMutation, publicError } from "@/lib/security";
-import { notifyTicketCalled } from "@/lib/services/push";
+import { notifyQueueProximity, notifyTicketCalled } from "@/lib/services/push";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!isTrustedMutation(request)) {
@@ -19,6 +19,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
     try {
       await notifyTicketCalled(ticket.id, `${appUrl}/ticket/${ticket.access_token}`);
+      await notifyQueueProximity(id, appUrl);
     } catch (error) {
       console.error("Unable to send ticket notification:", error);
     }

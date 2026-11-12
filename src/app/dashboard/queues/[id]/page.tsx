@@ -22,6 +22,7 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
     .eq("id", id)
     .single();
   if (!queue) notFound();
+  const { data: business } = await supabase.from("businesses").select("owner_id").eq("id", queue.business_id).single();
   const { data: tickets } = await supabase
     .from("tickets")
     .select("id,token,customer_name,party_size,status,joined_at")
@@ -43,7 +44,7 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
             Customer link: <a href={publicUrl}>{publicUrl}</a>
           </p>
         </div>
-        <QueueControls queueId={queue.id} status={queue.status} />
+        <QueueControls queueId={queue.id} status={queue.status} canManageQueue={business?.owner_id === user.id} />
       </div>
       <div className="grid">
         <div className="card">

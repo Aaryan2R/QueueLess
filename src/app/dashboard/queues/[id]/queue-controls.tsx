@@ -3,7 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function QueueControls({ queueId, status }: { queueId: string; status: string }) {
+export default function QueueControls({
+  queueId,
+  status,
+  canManageQueue
+}: {
+  queueId: string;
+  status: string;
+  canManageQueue: boolean;
+}) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
@@ -44,15 +52,16 @@ export default function QueueControls({ queueId, status }: { queueId: string; st
         <button className="button" disabled={busy} onClick={callNext} type="button">
           {busy ? "Updating..." : "Call next"}
         </button>
-        {status === "ACTIVE" ? (
-          <button className="button secondary" disabled={busy} onClick={() => setStatus("PAUSED")} type="button">
-            Pause
-          </button>
-        ) : (
-          <button className="button secondary" disabled={busy} onClick={() => setStatus("ACTIVE")} type="button">
-            Resume
-          </button>
-        )}
+        {canManageQueue &&
+          (status === "ACTIVE" ? (
+            <button className="button secondary" disabled={busy} onClick={() => setStatus("PAUSED")} type="button">
+              Pause
+            </button>
+          ) : (
+            <button className="button secondary" disabled={busy} onClick={() => setStatus("ACTIVE")} type="button">
+              Resume
+            </button>
+          ))}
       </div>
     </div>
   );

@@ -6,7 +6,11 @@ export function isTrustedMutation(request: Request) {
 
   const configuredOrigin = process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "");
   const requestOrigin = new URL(request.url).origin;
-  return origin === configuredOrigin || origin === requestOrigin;
+  const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  const forwardedProtocol = request.headers.get("x-forwarded-proto") ?? new URL(request.url).protocol.replace(":", "");
+  const hostOrigin = forwardedHost ? `${forwardedProtocol}://${forwardedHost}` : null;
+
+  return [configuredOrigin, requestOrigin, hostOrigin].includes(origin);
 }
 
 export function getClientAddress(request: Request) {
@@ -44,6 +48,11 @@ export function publicError(error: unknown, fallback: string) {
     /^This queue is currently full\.$/,
     /^Ticket not found or customer cancellation is disabled\.$/,
     /^This ticket is already complete\.$/,
+    /^Ticket is not currently awaiting arrival\.$/,
+    /^The 120-second arrival window has expired\.$/,
+    /^Business not found or access denied\.$/,
+    /^No account exists for that email address\.$/,
+    /^The business owner is already a manager\.$/,
     /^Please enter a name between 1 and 80 characters\.$/,
     /^Party size must be between 1 and 20\.$/
   ];
