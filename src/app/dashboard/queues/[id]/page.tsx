@@ -67,9 +67,14 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
           </div>
         )}
         <div className="card">
-          <h2>Live queue</h2>
+          <div className="actions" style={{ justifyContent: "space-between", alignItems: "center", marginTop: 0 }}>
+            <h2 style={{ margin: 0 }}>Live queue</h2>
+            <Link className="button secondary" href={`/dashboard/queues/${queue.id}/analytics`}>
+              View history & analytics
+            </Link>
+          </div>
           {(tickets ?? []).length === 0 ? (
-            <p className="muted">No customers are waiting.</p>
+            <p className="muted" style={{ marginTop: 16 }}>No customers are waiting.</p>
           ) : (
             (tickets ?? []).map((ticket) => (
               <div className="queue-row" key={ticket.id}>
@@ -80,11 +85,6 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
                   <div className="muted">
                     Party of {ticket.party_size} · {ticket.status}
                   </div>
-                </div>
-                <div className="actions">
-                  <Link className="button secondary" href={`/dashboard/queues/${queue.id}/analytics`}>
-                    View history & analytics
-                  </Link>
                 </div>
                 <TicketActions ticketId={ticket.id} status={ticket.status as "WAITING" | "CALLED" | "READY"} />
               </div>
