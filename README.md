@@ -1,85 +1,122 @@
 # QueueLess
 
-**QueueLess – A customizable web-based virtual queue platform for small businesses.**
+> A QR-first virtual queue for small businesses.
 
-## 1. Project Overview
-QueueLess allows cafés, restaurants, salons, clinics, and similar service-based businesses to create their own digital queue space online. A business owner creates and customizes a queue, generates a QR code, and places it at the business entrance or service point. Customers scan the QR code, enter basic details, receive a queue token, and track their position without standing in a physical line or installing a mobile application.
+QueueLess lets a café, salon, clinic, or service counter replace a physical waiting line with a lightweight browser flow. The business creates a queue and displays its QR code; customers scan, receive a private ticket, leave the premises if they want, and return when their turn approaches.
 
-## 2. Core Value
-- No customer app installation.
-- Business-specific branded queue page.
-- QR-based queue joining.
-- Live queue position and status.
-- Estimated waiting time.
-- Staff controls for calling and completing customers.
-- Basic business analytics.
+## Status
 
-## 3. Primary Roles
-- **Platform Admin:** manages the QueueLess platform and businesses.
-- **Business Owner:** creates the business space, customizes queues, manages staff and settings.
-- **Staff:** operates live queues and updates customer status.
-- **Customer:** joins and tracks a queue without creating a full platform account.
+| Area | State |
+| --- | --- |
+| Core queue lifecycle | Working |
+| Owner and staff dashboard | Working |
+| QR-based customer joining | Working |
+| Queue settings and analytics | Working |
+| Push notifications | Implemented; requires VAPID configuration |
+| Arrival window and requeue/no-show rules | Implemented; requires latest migration |
+| Automated tests | Initial unit coverage |
+| Production readiness | Not yet complete |
 
-## 4. Implemented Stack
-- Next.js + TypeScript (one full-stack web application).
-- Supabase PostgreSQL for relational data and queue-safe database functions.
-- Supabase Auth for owner/staff authentication.
-- Supabase Realtime for live dashboard updates, with refresh/polling-safe pages.
-- Web Push notifications for customer turn alerts when VAPID credentials are configured.
-- Vercel for the web deployment.
-- QR links generated from public queue URLs.
+## Product flow
 
-This intentionally avoids a separately deployed API, custom auth server, and standalone WebSocket service. Those can be added later only if the product genuinely needs them.
+```mermaid
+flowchart LR
+    Owner[Owner creates business] --> Queue[Configure queue]
+    Queue --> QR[Display QR code]
+    QR --> Customer[Customer scans and joins]
+    Customer --> Ticket[Private ticket page]
+    Ticket --> Alerts[Position and push alerts]
+    Alerts --> Arrival{Arrives within 120 seconds?}
+    Arrival -->|Yes| Serve[Staff serves customer]
+    Arrival -->|First miss| Requeue[Requeue behind 1-2 places]
+    Arrival -->|Second miss| NoShow[Mark no-show]
+    Serve --> Analytics[History and analytics]
+    Requeue --> Ticket
+    NoShow --> Analytics
+```
 
-## 5. MVP Scope
-1. Business registration/login.
-2. Business profile and branding customization.
-3. Queue creation and configuration.
-4. QR code generation.
-5. Customer queue joining.
-6. Unique ticket generation.
-7. Live queue management.
-8. Customer status page.
-9. Estimated wait time.
-10. Staff role.
-11. Queue history.
-12. Basic analytics.
+## What is included
 
-## 6. Future / Optional Features
-- Email/SMS/WhatsApp notifications.
-- Multiple branches.
-- Multiple concurrent queues.
-- Advanced wait-time prediction.
-- Customer feedback.
-- Subscription billing.
-- PWA support.
-- Advanced analytics.
+| Role | Main capabilities |
+| --- | --- |
+| Owner | Create a business, configure queues, manage staff, operate queues, view analytics |
+| Staff | Operate assigned queues and update ticket states |
+| Customer | Join through QR, track position, receive alerts, confirm arrival, leave the queue |
 
-The first implementation intentionally defers customer accounts, billing, SMS/email/WhatsApp notifications, file uploads, custom domains, and a full platform-admin console.
+## Technology
 
-## 7. Success Criteria
-A reviewer should be able to complete this demonstration:
+| Layer | Technology |
+| --- | --- |
+| Web application | Next.js 15, React 19, TypeScript |
+| Data and auth | Supabase PostgreSQL, Auth, RLS, Realtime |
+| Validation and utilities | Zod, QRCode |
+| Notifications | Web Push with VAPID |
+| Quality | ESLint, TypeScript, Prettier, Vitest |
+| Deployment target | Vercel |
 
-`Create Business → Customize Queue → Generate QR → Scan/Join → Receive Token → Staff Calls Next → Customer Status Updates → Mark Served → Analytics/History Updated`
+QueueLess is intentionally one full-stack Next.js application. There is no separate Express server or custom authentication service.
 
-## 8. Documentation Index
-- [Project Brief](project-brief.md)
-- [Context](context.md)
-- [Requirements](requirements.md)
-- [User Stories](user-stories.md)
-- [Acceptance Criteria](acceptance-criteria.md)
-- [Design](design.md)
-- [Architecture](architecture.md)
-- [DFD](dfd.md)
-- [Database](database.md)
-- [API](api.md)
-- [Business Rules](rule.md)
-- [UI Specification](ui.md)
-- [Security](security.md)
-- [Testing](testing.md)
-- [Tasks](task.md)
-- [Roadmap](roadmap.md)
-- [Decisions](decisions.md)
-- [Glossary](glossary.md)
-- [Folder Structure](folder-structure.md)
-- [AI Coding Rules](AI_RULES.md)
+## Quick start
+
+### Requirements
+
+- Node.js LTS and npm
+- A Supabase project
+- Optional: VAPID keys for browser push notifications
+
+```powershell
+git clone https://github.com/Aaryan2R/QueueLess.git
+cd QueueLess
+npm install
+Copy-Item .env.example .env.local
+```
+
+Add the values described in [docs/development.md](docs/development.md), then start the app:
+
+```powershell
+npm run dev
+```
+
+Open `http://localhost:3000`, create an owner account, create a business, and use its generated queue QR/link.
+
+## Verification commands
+
+```powershell
+npm run test
+npm run lint
+npm run typecheck
+npm run build
+```
+
+## Repository map
+
+```text
+QueueLess/
+├── src/app/                 Next.js routes, pages, dashboard and customer UI
+├── src/lib/                 Supabase clients, services, validation and security
+├── supabase/migrations/     Ordered database schema and queue-state migrations
+├── supabase/seed.sql        Optional local/demo seed data
+├── tests/                   Vitest unit tests
+├── public/                  Browser assets and service worker
+├── docs/                    Product, architecture, operations and audit documentation
+├── middleware.ts            Session refresh and request middleware
+├── next.config.ts           Next.js security/build configuration
+└── package.json             Scripts and dependencies
+```
+
+## Documentation
+
+| Document | Purpose |
+| --- | --- |
+| [Documentation home](docs/README.md) | Navigation and current project summary |
+| [Product guide](docs/product.md) | Purpose, roles, scope and user journeys |
+| [Architecture](docs/architecture.md) | System diagram, data flow, routes and database model |
+| [Development guide](docs/development.md) | Setup, environment, migrations and validation |
+| [Security guide](docs/security.md) | Tenant isolation, secrets, controls and open hardening |
+| [Operations guide](docs/operations.md) | Demo runbook and production checklist |
+| [Roadmap](docs/roadmap.md) | Completed work and next priorities |
+| [Audit archive](docs/audits/) | Historical reviews and independent audit briefs |
+
+## Security note
+
+Never commit `.env.local`, Supabase secret/service-role keys, private VAPID keys, access tokens, or customer data. Public ticket URLs are bearer credentials and must be treated as private.
