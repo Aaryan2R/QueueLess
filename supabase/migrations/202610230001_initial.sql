@@ -1,17 +1,37 @@
 create extension if not exists pgcrypto;
 
-create type public.app_role as enum ('OWNER', 'STAFF', 'PLATFORM_ADMIN');
-create type public.queue_status as enum ('ACTIVE', 'PAUSED', 'CLOSED');
-create type public.ticket_status as enum ('WAITING', 'CALLED', 'READY', 'SERVED', 'NO_SHOW', 'CANCELLED');
+do $$
+begin
+  create type public.app_role as enum ('OWNER', 'STAFF', 'PLATFORM_ADMIN');
+exception
+  when duplicate_object then null;
+end
+$$;
 
-create table public.profiles (
+do $$
+begin
+  create type public.queue_status as enum ('ACTIVE', 'PAUSED', 'CLOSED');
+exception
+  when duplicate_object then null;
+end
+$$;
+
+do $$
+begin
+  create type public.ticket_status as enum ('WAITING', 'CALLED', 'READY', 'SERVED', 'NO_SHOW', 'CANCELLED');
+exception
+  when duplicate_object then null;
+end
+$$;
+
+create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   full_name text not null default '',
   role public.app_role not null default 'OWNER',
   created_at timestamptz not null default now()
 );
 
-create table public.businesses (
+create table if not exists public.businesses (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete cascade,
   name text not null check (char_length(name) between 2 and 80),
@@ -22,7 +42,7 @@ create table public.businesses (
   created_at timestamptz not null default now()
 );
 
-create table public.staff_assignments (
+create table if not exists public.staff_assignments (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id) on delete cascade,
   user_id uuid not null references public.profiles(id) on delete cascade,
@@ -30,7 +50,7 @@ create table public.staff_assignments (
   unique (business_id, user_id)
 );
 
-create table public.queues (
+create table if not exists public.queues (
   id uuid primary key default gen_random_uuid(),
   business_id uuid not null references public.businesses(id) on delete cascade,
   name text not null check (char_length(name) between 2 and 80),
@@ -44,12 +64,12 @@ create table public.queues (
   unique (slug)
 );
 
-create table public.queue_counters (
+create table if not exists public.queue_counters (
   queue_id uuid primary key references public.queues(id) on delete cascade,
   next_number integer not null default 1 check (next_number > 0)
 );
 
-create table public.tickets (
+create table if not exists public.tickets (
   id uuid primary key default gen_random_uuid(),
   queue_id uuid not null references public.queues(id) on delete cascade,
   access_token text not null unique default encode(gen_random_bytes(24), 'hex'),
@@ -67,7 +87,7 @@ create table public.tickets (
   unique (queue_id, sequence_number)
 );
 
-create table public.ticket_status_history (
+create table if not exists public.ticket_status_history (
   id bigint generated always as identity primary key,
   ticket_id uuid not null references public.tickets(id) on delete cascade,
   old_status public.ticket_status,
@@ -226,6 +246,16 @@ alter table public.queues enable row level security;
 alter table public.tickets enable row level security;
 alter table public.ticket_status_history enable row level security;
 
+drop policy if exists "profiles own profile" on public.profiles;
+drop policy if exists "owners manage businesses" on public.businesses;
+drop policy if exists "members read queues" on public.queues;
+drop policy if exists "public read active queues" on public.queues;
+drop policy if exists "owners manage queues" on public.queues;
+drop policy if exists "public read business branding" on public.businesses;
+drop policy if exists "owners manage staff" on public.staff_assignments;
+drop policy if exists "members read tickets" on public.tickets;
+drop policy if exists "members read history" on public.ticket_status_history;
+
 create policy "profiles own profile" on public.profiles for select using (id = auth.uid());
 create policy "owners manage businesses" on public.businesses for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
 create policy "members read queues" on public.queues for select using (public.is_business_member(business_id));
@@ -244,6 +274,13 @@ begin
 end;
 $$;
 
+drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created after insert on auth.users for each row execute procedure public.handle_new_user();
 
-alter publication supabase_realtime add table public.tickets;
+do $$
+begin
+  alter publication supabase_realtime add table public.tickets;
+exception
+  when duplicate_object then null;
+end
+$$;
