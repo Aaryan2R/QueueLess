@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { checkRateLimit, isTrustedMutation, publicError, ticketTokenSchema } from "../src/lib/security";
 import { isValidTicketTransition } from "../src/lib/queue-rules";
+import { getAppUrl } from "../src/lib/app-url";
 
 describe("ticketTokenSchema", () => {
   it("accepts generated 48-character hexadecimal tokens", () => {
@@ -74,6 +75,36 @@ describe("isTrustedMutation", () => {
       headers: { origin: "http://localhost:3000" }
     });
     expect(isTrustedMutation(req)).toBe(true);
+  });
+});
+
+describe("getAppUrl", () => {
+  it("uses the configured public URL", () => {
+    const previous = process.env.NEXT_PUBLIC_APP_URL;
+    const previousVercelUrl = process.env.VERCEL_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "https://demo.example.com";
+    delete process.env.VERCEL_URL;
+
+    expect(getAppUrl("https://request.example.com")).toBe("https://demo.example.com");
+
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = previous;
+    if (previousVercelUrl === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = previousVercelUrl;
+  });
+
+  it("uses the Vercel URL when local configuration is deployed", () => {
+    const previous = process.env.NEXT_PUBLIC_APP_URL;
+    const previousVercelUrl = process.env.VERCEL_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
+    process.env.VERCEL_URL = "queueless-demo.vercel.app";
+
+    expect(getAppUrl()).toBe("https://queueless-demo.vercel.app");
+
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = previous;
+    if (previousVercelUrl === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = previousVercelUrl;
   });
 });
 

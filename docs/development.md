@@ -30,6 +30,9 @@ SUPABASE_SERVICE_ROLE_KEY=<server-only-secret-key>
 
 `SUPABASE_SERVICE_ROLE_KEY` and `VAPID_PRIVATE_KEY` are server-only. Never use `NEXT_PUBLIC_` for them, paste them into chat, or commit them.
 
+For Vercel, set `NEXT_PUBLIC_APP_URL` to the final public URL. If it is accidentally left as
+`http://localhost:3000`, QueueLess uses Vercel's deployment URL for generated QR and push links.
+
 Generate VAPID keys when needed:
 
 ```powershell

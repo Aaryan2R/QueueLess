@@ -7,6 +7,7 @@ import QueueControls from "./queue-controls";
 import TicketActions from "./ticket-actions";
 import QueueSettings from "./queue-settings";
 import LiveRefresh from "@/app/live-refresh";
+import { getAppUrl } from "@/lib/app-url";
 
 export const dynamic = "force-dynamic";
 
@@ -30,7 +31,7 @@ export default async function QueuePage({ params }: { params: Promise<{ id: stri
     .eq("queue_id", id)
     .in("status", ["WAITING", "CALLED", "READY"])
     .order("sequence_number");
-  const publicUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"}/q/${queue.slug}`;
+  const publicUrl = `${getAppUrl()}/q/${queue.slug}`;
   const qrCode = await QRCode.toDataURL(publicUrl, { width: 280, margin: 2 });
 
   return (

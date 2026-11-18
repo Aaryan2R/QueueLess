@@ -3,6 +3,7 @@ import { getServerSupabase } from "@/lib/supabase";
 import { callNext } from "@/lib/services/queue";
 import { isTrustedMutation, publicError } from "@/lib/security";
 import { notifyQueueProximity, notifyTicketCalled } from "@/lib/services/push";
+import { getAppUrl } from "@/lib/app-url";
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   if (!isTrustedMutation(request)) {
@@ -16,7 +17,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!user) return NextResponse.json({ error: "You must be logged in." }, { status: 401 });
   try {
     const ticket = await callNext(supabase, id);
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? new URL(request.url).origin;
+    const appUrl = getAppUrl(new URL(request.url).origin);
     try {
       await notifyTicketCalled(ticket.id, `${appUrl}/ticket/${ticket.access_token}`);
       await notifyQueueProximity(id, appUrl);
