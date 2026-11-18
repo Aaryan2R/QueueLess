@@ -33,6 +33,10 @@ SUPABASE_SERVICE_ROLE_KEY=<server-only-secret-key>
 For Vercel, set `NEXT_PUBLIC_APP_URL` to the final public URL. If it is accidentally left as
 `http://localhost:3000`, QueueLess uses Vercel's deployment URL for generated QR and push links.
 
+In Supabase Authentication URL Configuration, set the production Site URL to
+`https://queueless-navy.vercel.app` and add this Redirect URL:
+`https://queueless-navy.vercel.app/auth/callback`. Keep the equivalent localhost callback URL for local development.
+
 Generate VAPID keys when needed:
 
 ```powershell

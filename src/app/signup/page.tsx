@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { getBrowserSupabase } from "@/lib/supabase-browser";
+import { getAppUrl } from "@/lib/app-url";
 
 export default function SignupPage() {
   const [message, setMessage] = useState("");
@@ -15,7 +16,10 @@ export default function SignupPage() {
     try {
       const { error } = await getBrowserSupabase().auth.signUp({
         email: String(form.get("email")),
-        password: String(form.get("password"))
+        password: String(form.get("password")),
+        options: {
+          emailRedirectTo: `${getAppUrl(window.location.origin)}/auth/callback?next=/dashboard`
+        }
       });
       if (error) throw error;
       setMessage("Account created. Check your email if confirmation is enabled, then log in.");

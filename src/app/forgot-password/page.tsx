@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { getBrowserSupabase } from "@/lib/supabase-browser";
+import { getAppUrl } from "@/lib/app-url";
 
 export default function ForgotPasswordPage() {
   const [message, setMessage] = useState("");
@@ -15,7 +16,7 @@ export default function ForgotPasswordPage() {
     const form = new FormData(event.currentTarget);
     try {
       const { error } = await getBrowserSupabase().auth.resetPasswordForEmail(String(form.get("email")), {
-        redirectTo: `${window.location.origin}/reset-password`
+        redirectTo: `${getAppUrl(window.location.origin)}/auth/callback?next=/reset-password`
       });
       if (error) throw error;
       setMessage("If an account exists for that email, a password reset link has been sent.");
