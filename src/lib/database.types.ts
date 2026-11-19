@@ -228,6 +228,7 @@ export type Database = {
           input_name: string;
           input_phone?: string | null;
           input_party_size?: number;
+          input_idempotency_key?: string | null;
         };
         Returns: Database["public"]["Tables"]["tickets"]["Row"];
       };

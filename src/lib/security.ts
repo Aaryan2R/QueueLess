@@ -2,6 +2,7 @@ import { z } from "zod";
 
 const buckets = new Map<string, { count: number; resetAt: number }>();
 export const ticketTokenSchema = z.string().regex(/^[a-f0-9]{48}$/);
+export const idempotencyKeySchema = z.string().uuid();
 
 export function getSafeNextPath(value: string | null) {
   const allowedPaths = new Set(["/dashboard", "/reset-password"]);

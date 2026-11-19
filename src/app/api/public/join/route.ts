@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getServerSupabase } from "@/lib/supabase";
-import { checkRateLimit, getClientAddress, isTrustedMutation, publicError } from "@/lib/security";
+import {
+  checkRateLimit,
+  getClientAddress,
+  idempotencyKeySchema,
+  isTrustedMutation,
+  publicError
+} from "@/lib/security";
 
 const schema = z.object({
   queueId: z.string().uuid(),
   name: z.string().trim().min(1).max(80),
   phone: z.string().trim().max(30).optional(),
-  partySize: z.number().int().min(1).max(20)
+  partySize: z.number().int().min(1).max(20),
+  idempotencyKey: idempotencyKeySchema
 });
 
 export async function POST(request: Request) {
@@ -28,7 +35,8 @@ export async function POST(request: Request) {
         target_queue_id: input.queueId,
         input_name: input.name,
         input_phone: input.phone ?? null,
-        input_party_size: input.partySize
+        input_party_size: input.partySize,
+        input_idempotency_key: input.idempotencyKey
       })
       .single();
     if (error) {

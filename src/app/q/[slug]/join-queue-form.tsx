@@ -5,6 +5,7 @@ import { FormEvent, useState } from "react";
 export default function JoinQueueForm({ queueId }: { queueId: string }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setBusy(true);
@@ -18,7 +19,8 @@ export default function JoinQueueForm({ queueId }: { queueId: string }) {
           queueId,
           name: form.get("name"),
           phone: form.get("phone"),
-          partySize: Number(form.get("partySize"))
+          partySize: Number(form.get("partySize")),
+          idempotencyKey
         })
       });
       const body = await response.json();
