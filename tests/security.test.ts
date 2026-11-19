@@ -98,13 +98,13 @@ describe("isTrustedMutation", () => {
 });
 
 describe("getAppUrl", () => {
-  it("uses the configured public URL", () => {
+  it("uses the live HTTPS request origin before an older configured URL", () => {
     const previous = process.env.NEXT_PUBLIC_APP_URL;
     const previousVercelUrl = process.env.VERCEL_URL;
     process.env.NEXT_PUBLIC_APP_URL = "https://demo.example.com";
     delete process.env.VERCEL_URL;
 
-    expect(getAppUrl("https://request.example.com")).toBe("https://demo.example.com");
+    expect(getAppUrl("https://request.example.com")).toBe("https://request.example.com");
 
     if (previous === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
     else process.env.NEXT_PUBLIC_APP_URL = previous;
@@ -119,6 +119,20 @@ describe("getAppUrl", () => {
     process.env.VERCEL_URL = "queueless-demo.vercel.app";
 
     expect(getAppUrl()).toBe("https://queueless-demo.vercel.app");
+
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = previous;
+    if (previousVercelUrl === undefined) delete process.env.VERCEL_URL;
+    else process.env.VERCEL_URL = previousVercelUrl;
+  });
+
+  it("uses the live HTTPS request origin instead of localhost", () => {
+    const previous = process.env.NEXT_PUBLIC_APP_URL;
+    const previousVercelUrl = process.env.VERCEL_URL;
+    process.env.NEXT_PUBLIC_APP_URL = "http://localhost:3000";
+    delete process.env.VERCEL_URL;
+
+    expect(getAppUrl("https://queueless-navy.vercel.app")).toBe("https://queueless-navy.vercel.app");
 
     if (previous === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
     else process.env.NEXT_PUBLIC_APP_URL = previous;
