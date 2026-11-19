@@ -171,9 +171,21 @@ create or replace function public.call_next(target_queue_id uuid)
 returns public.tickets language plpgsql security definer set search_path = public as $$
 declare
   next_ticket public.tickets;
+  target_queue public.queues;
 begin
   if not exists (select 1 from public.queues q where q.id = target_queue_id and public.is_business_member(q.business_id)) then
     raise exception 'Queue not found or access denied.';
+  end if;
+  select q.* into target_queue
+  from public.queues q
+  where q.id = target_queue_id
+  for update;
+
+  if target_queue.id is null then
+    raise exception 'Queue not found or access denied.';
+  end if;
+  if target_queue.status <> 'ACTIVE' then
+    raise exception 'This queue is not accepting calls.';
   end if;
   select t.* into next_ticket from public.tickets t where t.queue_id = target_queue_id and t.status = 'WAITING'
     order by t.sequence_number for update skip locked limit 1;

@@ -3,6 +3,12 @@ import { z } from "zod";
 const buckets = new Map<string, { count: number; resetAt: number }>();
 export const ticketTokenSchema = z.string().regex(/^[a-f0-9]{48}$/);
 
+export function getSafeNextPath(value: string | null) {
+  const allowedPaths = new Set(["/dashboard", "/reset-password"]);
+  if (!value || !allowedPaths.has(value)) return "/dashboard";
+  return value;
+}
+
 export function isTrustedMutation(request: Request) {
   const origin = request.headers.get("origin");
   if (!origin) return true;
@@ -17,7 +23,17 @@ export function isTrustedMutation(request: Request) {
 }
 
 export function getClientAddress(request: Request) {
-  return request.headers.get("x-forwarded-for")?.split(",")[0].trim() || request.headers.get("x-real-ip") || "unknown";
+  const vercelAddress = request.headers.get("x-vercel-forwarded-for")?.split(",")[0].trim();
+  if (vercelAddress) return vercelAddress;
+
+  const cloudflareAddress = request.headers.get("cf-connecting-ip")?.trim();
+  if (cloudflareAddress) return cloudflareAddress;
+
+  if (process.env.VERCEL !== "1" && process.env.NODE_ENV !== "production") {
+    return request.headers.get("x-real-ip")?.trim() || "unknown";
+  }
+
+  return "unknown";
 }
 
 export function checkRateLimit(key: string, limit: number, windowMs: number) {
@@ -48,6 +64,7 @@ export function publicError(error: unknown, fallback: string) {
     /^Ticket not found or access denied\.$/,
     /^That ticket cannot move from [A-Z_]+ to [A-Z_]+\.$/,
     /^This queue is not accepting new customers\.$/,
+    /^This queue is not accepting calls\.$/,
     /^This queue is currently full\.$/,
     /^Ticket not found or customer cancellation is disabled\.$/,
     /^This ticket is already complete\.$/,

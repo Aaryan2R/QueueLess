@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { getServerSupabase } from "@/lib/supabase";
-
-function getSafeNextPath(value: string | null) {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/dashboard";
-  return value;
-}
+import { getSafeNextPath } from "@/lib/security";
 
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url);

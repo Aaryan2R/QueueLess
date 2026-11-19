@@ -97,8 +97,6 @@ as $$
 declare
   current_ticket public.tickets;
   updated_ticket public.tickets;
-  ticket_to_swap public.tickets;
-  current_sequence integer;
   target_sequence integer;
 begin
   select t.*
@@ -115,30 +113,14 @@ begin
   end if;
 
   if current_ticket.missed_turn_count = 0 then
-    current_sequence := current_ticket.sequence_number;
+    insert into public.queue_counters(queue_id)
+    values (current_ticket.queue_id)
+    on conflict (queue_id) do nothing;
 
-    select t.*
-    into ticket_to_swap
-    from public.tickets t
-    where t.queue_id = current_ticket.queue_id
-      and t.status = 'WAITING'
-      and t.sequence_number > current_sequence
-    order by t.sequence_number
-    offset 1
-    limit 1
-    for update;
-
-    target_sequence := coalesce(ticket_to_swap.sequence_number, current_sequence);
-
-    update public.tickets
-    set sequence_number = -current_sequence
-    where id = current_ticket.id;
-
-    if ticket_to_swap.id is not null then
-      update public.tickets
-      set sequence_number = current_sequence
-      where id = ticket_to_swap.id;
-    end if;
+    update public.queue_counters
+    set next_number = next_number + 1
+    where queue_id = current_ticket.queue_id
+    returning next_number - 1 into target_sequence;
 
     update public.tickets
     set sequence_number = target_sequence,

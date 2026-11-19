@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkRateLimit, isTrustedMutation, publicError, ticketTokenSchema } from "../src/lib/security";
+import { checkRateLimit, getClientAddress, getSafeNextPath, isTrustedMutation, publicError, ticketTokenSchema } from "../src/lib/security";
 import { isValidTicketTransition } from "../src/lib/queue-rules";
 import { getAppUrl } from "../src/lib/app-url";
 
@@ -105,6 +105,49 @@ describe("getAppUrl", () => {
     else process.env.NEXT_PUBLIC_APP_URL = previous;
     if (previousVercelUrl === undefined) delete process.env.VERCEL_URL;
     else process.env.VERCEL_URL = previousVercelUrl;
+  });
+});
+
+describe("auth callback redirects", () => {
+  it("allows only known internal destinations", () => {
+    expect(getSafeNextPath("/dashboard")).toBe("/dashboard");
+    expect(getSafeNextPath("/reset-password")).toBe("/reset-password");
+  });
+
+  it("rejects protocol-relative, backslash, and arbitrary destinations", () => {
+    expect(getSafeNextPath("//evil.example")).toBe("/dashboard");
+    expect(getSafeNextPath("/\\evil.example")).toBe("/dashboard");
+    expect(getSafeNextPath("https://evil.example")).toBe("/dashboard");
+    expect(getSafeNextPath(null)).toBe("/dashboard");
+  });
+});
+
+describe("getClientAddress", () => {
+  it("uses platform forwarding headers before fallback headers", () => {
+    const request = new Request("https://queueless.example/api/public/join", {
+      headers: {
+        "x-vercel-forwarded-for": "203.0.113.10, 198.51.100.20",
+        "cf-connecting-ip": "203.0.113.11",
+        "x-forwarded-for": "203.0.113.12"
+      }
+    });
+    expect(getClientAddress(request)).toBe("203.0.113.10");
+  });
+
+  it("does not trust client forwarding headers in production", () => {
+    const previousProduction = process.env.NODE_ENV;
+    process.env.NODE_ENV = "production";
+    delete process.env.VERCEL;
+
+    const request = new Request("https://queueless.example/api/public/join", {
+      headers: {
+        "x-forwarded-for": "203.0.113.10",
+        "x-real-ip": "203.0.113.11"
+      }
+    });
+    expect(getClientAddress(request)).toBe("unknown");
+
+    process.env.NODE_ENV = previousProduction;
   });
 });
 
